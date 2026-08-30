@@ -29,13 +29,16 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
       - name: Install Dependencies
         run: npm install
+
+      - name: Fix Binary Permissions
+        run: chmod -R +x node_modules/.bin || true
 
       - name: Initialize Database
         env:
@@ -54,4 +57,4 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: empmngsys
-        run: npx jest --runInBand --detectOpenHandles
+        run: node ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles

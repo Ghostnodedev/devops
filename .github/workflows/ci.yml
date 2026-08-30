@@ -37,13 +37,11 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # PostgreSQL client utility install karo taaki psql command chal sake
       - name: Install PostgreSQL Client
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y postgresql-client
+          sudo apt-get install -y postgresql-client
 
-      # Database table create karo
       - name: Setup Database Schema
         env:
           PGPASSWORD: mysecretpassword
@@ -58,7 +56,6 @@ jobs:
             );
           "
 
-      # Automated Tests run karo
       - name: Run Jest Automated Tests
         env:
           DB_USER: postgres

@@ -29,16 +29,17 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install Dependencies
-        run: npm install
+      - name: Install Dependencies & Jest
+        run: |
+          npm install
+          npm install --save-dev jest supertest
 
-      # Node.js ke through bina kisi Linux tool ke table create karna
-      - name: Setup Database Schema
+      - name: Setup Database Table
         env:
           DB_USER: postgres
           DB_PASSWORD: mysecretpassword
@@ -46,37 +47,13 @@ jobs:
           DB_PORT: 5432
           DB_NAME: empmngsys
         run: |
-          node -e "
-            const { Pool } = require('pg');
-            const pool = new Pool({
-              user: process.env.DB_USER,
-              password: process.env.DB_PASSWORD,
-              host: process.env.DB_HOST,
-              port: process.env.DB_PORT,
-              database: process.env.DB_NAME
-            });
-            pool.query(\`
-              CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100) NOT NULL,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                password VARCHAR(255) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-              );
-            \`).then(() => {
-              console.log('✅ Users table created successfully');
-              return pool.end();
-            }).catch(err => {
-              console.error(err);
-              process.exit(1);
-            });
-          "
+          node -e "const { Pool } = require('pg'); const pool = new Pool({ user: process.env.DB_USER, password: process.env.DB_PASSWORD, host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME }); pool.query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);').then(() => { console.log('Table created'); return pool.end(); }).catch(err => { console.error(err); process.exit(1); });"
 
-      - name: Run Jest Automated Tests
+      - name: Run Tests
         env:
           DB_USER: postgres
           DB_PASSWORD: mysecretpassword
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: empmngsys
-        run: npm test
+        run: npx jest --runInBand --detectOpenHandles

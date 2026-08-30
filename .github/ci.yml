@@ -10,7 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    # GitHub Actions mein background PostgreSQL container setup
     services:
       postgres:
         image: postgres:16
@@ -27,22 +26,17 @@ jobs:
           --health-retries 5
 
     steps:
-      # 1. Code ko GitHub se runner machine par download karo
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Node.js 22 setup karo
       - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
 
-      # 3. Dependencies install karo
       - name: Install Dependencies
-        run: npm ci
+        run: npm install
 
-      # 4. Postgres DB mein users table create karo
       - name: Setup Database Schema
         env:
           PGPASSWORD: mysecretpassword
@@ -57,7 +51,6 @@ jobs:
             );
           "
 
-      # 5. Automated Tests run karo
       - name: Run Jest Automated Tests
         env:
           DB_USER: postgres

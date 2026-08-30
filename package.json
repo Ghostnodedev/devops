@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
-    "test": "jest --runInBand --detectOpenHandles"
-  },
+  "start": "node src/server.js",
+  "pretest": "node src/test/setupDb.js",
+  "test": "jest --runInBand --detectOpenHandles"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",

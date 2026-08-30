@@ -26,7 +26,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -34,20 +34,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Install Dependencies & Jest
-        run: |
-          npm install
-          npm install --save-dev jest supertest
-
-      - name: Setup Database Table
-        env:
-          DB_USER: postgres
-          DB_PASSWORD: mysecretpassword
-          DB_HOST: localhost
-          DB_PORT: 5432
-          DB_NAME: empmngsys
-        run: |
-          node -e "const { Pool } = require('pg'); const pool = new Pool({ user: process.env.DB_USER, password: process.env.DB_PASSWORD, host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME }); pool.query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);').then(() => { console.log('Table created'); return pool.end(); }).catch(err => { console.error(err); process.exit(1); });"
+      - name: Install All Dependencies
+        run: npm install
 
       - name: Run Tests
         env:
@@ -56,4 +44,4 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: empmngsys
-        run: npx jest --runInBand --detectOpenHandles
+        run: npm test

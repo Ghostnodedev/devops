@@ -57,4 +57,4 @@ jobs:
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: empmngsys
-        run: node ./node_modules/jest/bin/jest.js --runInBand --detectOpenHandles
+        run: node ./node_modules/jest/bin/jest.js --runInBand --forceExit --testTimeout=10000

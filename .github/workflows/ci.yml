@@ -26,7 +26,7 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout Code
         uses: actions/checkout@v4
 
       - name: Setup Node.js 22
@@ -37,33 +37,21 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      # PostgreSQL client utility install karo taaki psql command chal sake
-      - name: Install PostgreSQL Client
-        run: |
-          sudo apt-get update
-          sudo apt-get install --no-install-recommends -y postgresql-client
-
-      # Database table create karo
-      - name: Setup Database Schema
-        env:
-          PGPASSWORD: mysecretpassword
-        run: |
-          psql -h localhost -U postgres -d empmngsys -c "
-            CREATE TABLE IF NOT EXISTS users (
-              id SERIAL PRIMARY KEY,
-              name VARCHAR(100) NOT NULL,
-              email VARCHAR(255) UNIQUE NOT NULL,
-              password VARCHAR(255) NOT NULL,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
-          "
-
-      # Automated Tests run karo
-      - name: Run Jest Automated Tests
+      - name: Initialize Database
         env:
           DB_USER: postgres
           DB_PASSWORD: mysecretpassword
           DB_HOST: localhost
           DB_PORT: 5432
           DB_NAME: empmngsys
-        run: npm test
+        run: |
+          node -e "const { Pool } = require('pg'); const pool = new Pool({ user: process.env.DB_USER, password: process.env.DB_PASSWORD, host: process.env.DB_HOST, port: process.env.DB_PORT, database: process.env.DB_NAME }); pool.query('CREATE TABLE IF NOT EXISTS users (id SERIAL PRIMARY KEY, name VARCHAR(100) NOT NULL, email VARCHAR(255) UNIQUE NOT NULL, password VARCHAR(255) NOT NULL, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);').then(() => { console.log('Database table ready'); return pool.end(); }).catch(err => { console.error(err); process.exit(1); });"
+
+      - name: Run Tests
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: mysecretpassword
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: empmngsys
+        run: npx jest --runInBand --detectOpenHandles

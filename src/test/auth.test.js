@@ -2,9 +2,10 @@ const request = require('supertest');
 const app = require('../app');
 const db = require('../db');
 
-// afterAll(async () => {
-//   await db.end();
-// });
+// Ye zaroori hai connection close karne ke liye
+afterAll(async () => {
+  await db.end();
+});
 
 test('User register hona chahiye aur 201 status aana chahiye', async () => {
   const uniqueEmail = `test_${Date.now()}@test.com`;

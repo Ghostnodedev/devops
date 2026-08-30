@@ -37,23 +37,39 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Install PostgreSQL Client
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-
+      # Node.js ke through bina kisi Linux tool ke table create karna
       - name: Setup Database Schema
         env:
-          PGPASSWORD: mysecretpassword
+          DB_USER: postgres
+          DB_PASSWORD: mysecretpassword
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: empmngsys
         run: |
-          psql -h localhost -U postgres -d empmngsys -c "
-            CREATE TABLE IF NOT EXISTS users (
-              id SERIAL PRIMARY KEY,
-              name VARCHAR(100) NOT NULL,
-              email VARCHAR(255) UNIQUE NOT NULL,
-              password VARCHAR(255) NOT NULL,
-              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            );
+          node -e "
+            const { Pool } = require('pg');
+            const pool = new Pool({
+              user: process.env.DB_USER,
+              password: process.env.DB_PASSWORD,
+              host: process.env.DB_HOST,
+              port: process.env.DB_PORT,
+              database: process.env.DB_NAME
+            });
+            pool.query(\`
+              CREATE TABLE IF NOT EXISTS users (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                email VARCHAR(255) UNIQUE NOT NULL,
+                password VARCHAR(255) NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+              );
+            \`).then(() => {
+              console.log('✅ Users table created successfully');
+              return pool.end();
+            }).catch(err => {
+              console.error(err);
+              process.exit(1);
+            });
           "
 
       - name: Run Jest Automated Tests

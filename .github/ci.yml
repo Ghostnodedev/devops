@@ -1,0 +1,68 @@
+name: Node.js CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    # GitHub Actions mein background PostgreSQL container setup
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: mysecretpassword
+          POSTGRES_DB: empmngsys
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      # 1. Code ko GitHub se runner machine par download karo
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Node.js 22 setup karo
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'npm'
+
+      # 3. Dependencies install karo
+      - name: Install Dependencies
+        run: npm ci
+
+      # 4. Postgres DB mein users table create karo
+      - name: Setup Database Schema
+        env:
+          PGPASSWORD: mysecretpassword
+        run: |
+          psql -h localhost -U postgres -d empmngsys -c "
+            CREATE TABLE IF NOT EXISTS users (
+              id SERIAL PRIMARY KEY,
+              name VARCHAR(100) NOT NULL,
+              email VARCHAR(255) UNIQUE NOT NULL,
+              password VARCHAR(255) NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          "
+
+      # 5. Automated Tests run karo
+      - name: Run Jest Automated Tests
+        env:
+          DB_USER: postgres
+          DB_PASSWORD: mysecretpassword
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: empmngsys
+        run: npm test
